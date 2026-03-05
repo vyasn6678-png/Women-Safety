@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GuardianEye | Advanced Safety System</title>
+    <!-- SEO Meta Tags -->
+    <meta name="description"
+        content="GuardianEye is a comprehensive safety application featuring SOS, live tracking, AI danger detection, and more.">
+
+    <!-- Google Fonts: Inter & Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Leaflet CSS & JS for Mapping -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <link rel="stylesheet" href="styles.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        safety: {
+                            red: '#FF3B30',
+                            orange: '#FF9500',
+                            blue: '#007AFF',
+                            dark: '#0A0A0B',
+                            card: '#1C1C1E',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        outfit: ['Outfit', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="font-sans antialiased">
+
+    <!-- Mobile Navigation -->
+    <div
+        class="lg:hidden fixed bottom-0 left-0 right-0 glass z-50 px-6 py-4 flex justify-between items-center border-t border-white/10">
+        <button onclick="showModule('dashboard')" class="flex flex-col items-center gap-1 opacity-60">
+            <i data-lucide="layout-dashboard" class="w-6 h-6"></i>
+            <span class="text-[10px]">Home</span>
+        </button>
+        <button onclick="showModule('map')" class="flex flex-col items-center gap-1 opacity-60">
+            <i data-lucide="map" class="w-6 h-6"></i>
+            <span class="text-[10px]">Map</span>
+        </button>
+        <button onclick="triggerSOS()"
+            class="bg-safety-red -mt-10 w-16 h-16 rounded-full flex items-center justify-center pulse shadow-2xl">
+            <i data-lucide="alert-triangle" class="w-8 h-8 text-white"></i>
+        </button>
+        <button onclick="showModule('tools')" class="flex flex-col items-center gap-1 opacity-60">
+            <i data-lucide="shield" class="w-6 h-6"></i>
+            <span class="text-[10px]">Tools</span>
+        </button>
+        <button onclick="showModule('ai')" class="flex flex-col items-center gap-1 opacity-60">
+            <i data-lucide="cpu" class="w-6 h-6"></i>
+            <span class="text-[10px]">AI</span>
+        </button>
+    </div>
+
+    <!-- Desktop Sidebar -->
+    <aside class="hidden lg:flex fixed left-0 top-0 bottom-0 w-72 flex-col glass border-r border-white/5 p-6 z-40">
+        <div class="flex items-center gap-3 mb-12">
+            <div class="w-10 h-10 bg-safety-red rounded-xl flex items-center justify-center rotate-3">
+                <i data-lucide="shield-check" class="w-6 h-6 text-white"></i>
+            </div>
+            <h1 class="text-2xl font-outfit font-bold">Guardian<span class="text-safety-red">Eye</span></h1>
+        </div>
+
+        <nav class="flex-1 space-y-2">
+            <button onclick="showModule('dashboard')" id="nav-dashboard"
+                class="nav-item active w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all">
+                <i data-lucide="layout-grid" class="w-5 h-5"></i>
+                <span class="font-medium">Dashboard</span>
+            </button>
+            <button onclick="showModule('map')" id="nav-map"
+                class="nav-item w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all">
+                <i data-lucide="map" class="w-5 h-5"></i>
+                <span class="font-medium">Safety Map</span>
+            </button>
+            <button onclick="showModule('circle')" id="nav-circle"
+                class="nav-item w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all">
+                <i data-lucide="users" class="w-5 h-5"></i>
+                <span class="font-medium">Trusted Circle</span>
+            </button>
+            <button onclick="showModule('tools')" id="nav-tools"
+                class="nav-item w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all">
+                <i data-lucide="shield" class="w-5 h-5"></i>
+                <span class="font-medium">Safety Tools</span>
+            </button>
+            <button onclick="showModule('ai')" id="nav-ai"
+                class="nav-item w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all">
+                <i data-lucide="brain-circuit" class="w-5 h-5"></i>
+                <span class="font-medium">AI Predictor</span>
+            </button>
+            <button onclick="showModule('community')" id="nav-community"
+                class="nav-item w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all">
+                <i data-lucide="megaphone" class="w-5 h-5"></i>
+                <span class="font-medium">Community</span>
+            </button>
+        </nav>
+
+        <div class="mt-auto pt-6 border-t border-white/5">
+            <div class="flex items-center gap-3 px-2">
+                <div class="w-10 h-10 rounded-full bg-safety-blue flex items-center justify-center font-bold">JD</div>
+                <div class="flex-1 overflow-hidden">
+                    <p class="text-sm font-medium">Safe User</p>
+                    <p class="text-[10px] opacity-40 uppercase">Emergency Active</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="lg:ml-72 min-h-screen p-4 lg:p-8 pb-32">
+        <header class="flex justify-between items-center mb-10">
+            <div>
+                <h2 id="module-title" class="text-3xl font-outfit font-bold">Safe Mode</h2>
+                <p id="module-subtitle" class="text-white/40 text-sm">Real-time monitoring active.</p>
+            </div>
+            <div class="flex items-center gap-4">
+                <div id="watch-sync-status"
+                    class="hidden md:flex items-center gap-2 glass px-4 py-2 rounded-full text-xs text-purple-400">
+                    <i data-lucide="watch" class="w-4 h-4"></i>
+                    <span class="font-bold">Watch Synced</span>
+                </div>
+                <button onclick="triggerSOS()"
+                    class="bg-safety-red px-6 py-2.5 rounded-full font-bold uppercase flex items-center gap-2">
+                    <i data-lucide="zap" class="w-4 h-4 fill-current"></i> SOS
+                </button>
+            </div>
+        </header>
+
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="module">
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <!-- SOS Hero -->
+                <div
+                    class="md:col-span-2 glass rounded-3xl p-8 relative overflow-hidden group border-l-4 border-safety-red">
+                    <div class="relative z-10">
+                        <h3 class="text-4xl font-outfit font-bold mb-4">Instant SOS Activation</h3>
+                        <p class="text-white/60 mb-8 max-w-md">Alert Mom and Dad instantly with your live location. SOS
+                            handles automated notifications and secret recording.</p>
+                        <button onclick="triggerSOS()"
+                            class="bg-safety-red px-10 py-4 rounded-2xl font-bold text-lg hover:brightness-110 active:scale-95 transition-all shadow-lg hover:shadow-safety-red/50">START
+                            SOS</button>
+                    </div>
+                </div>
+
+                <!-- Live Tracking Info -->
+                <div class="glass rounded-3xl p-6 flex flex-col justify-between">
+                    <div>
+                        <h4 class="font-outfit font-bold mb-4">Journey Status</h4>
+                        <div id="journey-card-content" class="space-y-3">
+                            <p class="text-xs text-white/40">No active journey. Start one from the Map.</p>
+                        </div>
+                    </div>
+                    <button onclick="showModule('map')"
+                        class="mt-4 w-full bg-white/5 py-3 rounded-xl text-xs font-bold hover:bg-white/10 transition-all">OPEN
+                        MAP</button>
+                </div>
+
+                <!-- Trusted Circle Preview -->
+                <div class="glass rounded-3xl p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h4 class="font-outfit font-bold">Trusted Circle</h4>
+                        <button onclick="showModule('circle')" class="text-safety-blue text-xs font-bold">VIEW
+                            ALL</button>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-4 bg-white/5 p-4 rounded-2xl">
+                            <div
+                                class="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center font-bold">
+                                M</div>
+                            <div class="flex-1">
+                                <p class="text-sm font-semibold">Mom</p>
+                                <p class="text-[10px] text-green-500">Live Tracking Enabled</p>
+                            </div>
+                            <i data-lucide="check-circle" class="w-4 h-4 text-green-500"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Quick Health -->
+                <div onclick="showModule('ai')"
+                    class="glass rounded-3xl p-6 text-center cursor-pointer hover:bg-white/5 transition-all">
+                    <div class="w-16 h-16 bg-purple-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="brain-circuit" class="w-8 h-8 text-purple-500"></i>
+                    </div>
+                    <h4 class="text-xl font-bold">AI Safety Score</h4>
+                    <p id="dash-ai-score" class="text-2xl font-black text-purple-400 mt-1">98%</p>
+                    <p class="text-[10px] text-white/40 mt-1">Movement Analysis: NORMAL</p>
+                </div>
+
+                <!-- Tools Quick Link -->
+                <div onclick="showModule('tools')"
+                    class="glass rounded-3xl p-6 text-center cursor-pointer hover:bg-white/5 transition-all">
+                    <div class="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="shield" class="w-8 h-8 text-blue-500"></i>
+                    </div>
+                    <h4 class="text-xl font-bold">Safety Tools</h4>
+                    <p class="text-xs text-white/40 mt-2">Fake Call, Secret Record & Watch Sync</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Map Section -->
+        <section id="map-section" class="hidden module">
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[600px]">
+                <div class="lg:col-span-3 glass h-full rounded-3xl p-2 relative overflow-hidden">
+                    <div id="map"></div>
+                    <div class="absolute bottom-6 right-6 z-[1000] glass px-4 py-3 rounded-2xl flex items-center gap-3">
+                        <div>
+                            <p class="text-[10px] opacity-40 uppercase">Last Sync</p>
+                            <p class="text-xs font-bold">Mumbai, 0 mins ago</p>
+                        </div>
+                        <button onclick="centerMap()" class="p-2 bg-safety-blue rounded-xl"><i
+                                data-lucide="locate-fixed" class="w-4 h-4"></i></button>
+                    </div>
+                </div>
+                <div class="glass rounded-3xl p-6 flex flex-col h-full">
+                    <h4 class="font-outfit font-bold mb-6">Journey Tracker</h4>
+                    <div id="journey-controls" class="space-y-4 flex-1">
+                        <div class="p-4 bg-white/5 rounded-2xl">
+                            <label class="text-[10px] opacity-40 uppercase block mb-1">Destination</label>
+                            <input type="text" placeholder="Enter destination..."
+                                class="w-full bg-transparent border-0 text-white text-sm focus:ring-0 outline-none p-0">
+                        </div>
+                        <button onclick="startJourney()"
+                            class="w-full bg-safety-blue py-4 rounded-2xl font-bold hover:brightness-110 active:scale-95 transition-all">START
+                            TRIP</button>
+                    </div>
+                    <div id="active-journey-info" class="hidden space-y-6 flex-1">
+                        <div class="relative pl-6 border-l-2 border-dashed border-white/20 space-y-8">
+                            <div class="relative">
+                                <div
+                                    class="absolute -left-[31px] top-0 w-4 h-4 rounded-full bg-safety-blue ring-4 ring-safety-blue/20">
+                                </div>
+                                <p class="text-[10px] opacity-40 uppercase">Current Location</p>
+                                <p class="text-xs font-bold">Mumbai Tech Park</p>
+                            </div>
+                            <div class="relative">
+                                <div
+                                    class="absolute -left-[31px] top-0 w-4 h-4 rounded-full bg-white ring-4 ring-white/10">
+                                </div>
+                                <p class="text-[10px] opacity-40 uppercase">Destination</p>
+                                <p class="text-xs font-bold" id="trip-dest-label">Home (Sector 4)</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="p-4 bg-white/5 rounded-2xl">
+                                <p class="text-[10px] opacity-40 uppercase">ETA</p>
+                                <p id="journey-eta" class="text-xl font-black">22 min</p>
+                            </div>
+                            <div class="p-4 bg-white/5 rounded-2xl">
+                                <p class="text-[10px] opacity-40 uppercase">Status</p>
+                                <p id="journey-status-label" class="text-xs font-bold text-green-500">ON PATH</p>
+                            </div>
+                        </div>
+                        <button onclick="cancelJourney()"
+                            class="w-full bg-white/5 py-3 rounded-xl text-xs font-bold hover:bg-red-500/20 hover:text-red-500 transition-all">STOP
+                            TRACKING</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Trusted Circle Section -->
+        <section id="circle-section" class="hidden module">
+            <div class="max-w-4xl mx-auto space-y-6">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-2xl font-bold">Trusted Circle</h3>
+                    <button onclick="addContact()" class="bg-safety-blue px-6 py-2 rounded-full font-bold text-sm">ADD
+                        PERSON</button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="circle-list">
+                    <!-- ContactCard -->
+                    <div class="glass p-6 rounded-3xl flex items-center gap-6">
+                        <div
+                            class="w-16 h-16 rounded-2xl bg-orange-500 flex items-center justify-center text-2xl font-black">
+                            M</div>
+                        <div class="flex-1">
+                            <p class="font-bold">Mom</p>
+                            <p class="text-xs text-white/40">9461206397</p>
+                            <div class="flex items-center gap-2 mt-2">
+                                <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                                <span class="text-[10px] text-green-500 font-bold uppercase">Online & Ready</span>
+                            </div>
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <button class="p-2 bg-white/5 rounded-xl text-safety-blue"><i data-lucide="phone"
+                                    class="w-4 h-4"></i></button>
+                            <button class="p-2 bg-white/5 rounded-xl text-white/40"><i data-lucide="settings"
+                                    class="w-4 h-4"></i></button>
+                        </div>
+                    </div>
+                    <div class="glass p-6 rounded-3xl flex items-center gap-6">
+                        <div
+                            class="w-16 h-16 rounded-2xl bg-blue-500 flex items-center justify-center text-2xl font-black">
+                            D</div>
+                        <div class="flex-1">
+                            <p class="font-bold">Dad</p>
+                            <p class="text-xs text-white/40">9875766481</p>
+                            <div class="flex items-center gap-2 mt-2">
+                                <span class="w-2 h-2 rounded-full bg-gray-500"></span>
+                                <span class="text-[10px] text-white/20 font-bold uppercase">Offline</span>
+                            </div>
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <button class="p-2 bg-white/5 rounded-xl text-safety-blue"><i data-lucide="phone"
+                                    class="w-4 h-4"></i></button>
+                            <button class="p-2 bg-white/5 rounded-xl text-white/40"><i data-lucide="settings"
+                                    class="w-4 h-4"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tools Section -->
+        <section id="tools-section" class="hidden module">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Recording -->
+                <div class="glass p-8 rounded-3xl cursor-pointer" onclick="toggleSecretRecording()">
+                    <i data-lucide="mic" id="recordIcon" class="text-red-500 mb-6 w-8 h-8"></i>
+                    <h4 class="text-xl font-bold mb-2">Secret Recording</h4>
+                    <p class="text-xs text-white/40 mb-6">Captures background audio/video evidence stealthily.</p>
+                    <div class="flex items-center justify-between">
+                        <div id="recordStatus" class="flex items-center gap-2 text-gray-500 text-xs font-bold">
+                            <div class="w-2 h-2 rounded-full bg-gray-500"></div> STANDBY MODE
+                        </div>
+                        <button onclick="startHiddenMode(event)"
+                            class="text-[10px] font-bold text-safety-blue underline">HIDDEN MODE</button>
+                    </div>
+                </div>
+
+                <!-- Fake Call Config -->
+                <div class="glass p-8 rounded-3xl">
+                    <i data-lucide="phone-mockup" class="text-blue-500 mb-6 w-8 h-8"></i>
+                    <h4 class="text-xl font-bold mb-4">Fake Call Simulator</h4>
+                    <p class="text-xs text-white/40 mb-6">Escaping a situation? Trigger a realistic call from Mom.</p>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="startFakeCall(10)" class="bg-blue-500 py-3 rounded-xl font-bold text-[10px]">IN
+                            10 SECONDS</button>
+                        <button onclick="startFakeCall(30)"
+                            class="bg-white/5 border border-white/10 py-3 rounded-xl font-bold text-[10px]">IN 30
+                            SECONDS</button>
+                    </div>
+                </div>
+
+                <!-- Voice Trigger -->
+                <div class="glass p-8 rounded-3xl cursor-pointer" onclick="simulateVoiceCommand()">
+                    <i data-lucide="mic-vocal" class="text-safety-orange mb-6 w-8 h-8"></i>
+                    <h4 class="text-xl font-bold mb-2">Voice & Shake</h4>
+                    <p class="text-xs text-white/40 mb-6">Automatic SOS triggers on "Help me" or rapid phone shake.</p>
+                    <div class="flex items-center gap-2 text-safety-orange text-[10px] font-bold">
+                        <i data-lucide="check" class="w-3 h-3"></i> ACTIVE
+                    </div>
+                </div>
+
+                <!-- Smartwatch Integration -->
+                <div class="glass p-8 rounded-3xl lg:col-span-2 border-l-2 border-purple-500">
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <i data-lucide="watch" class="text-purple-500 mb-4 w-8 h-8"></i>
+                            <h4 class="text-xl font-bold mb-2">Watch Sync Dashboard</h4>
+                            <p class="text-xs text-white/40">Activate and monitor safety from your Apple/Android Watch.
+                            </p>
+                        </div>
+                        <button id="watch-sync-btn" onclick="toggleWatchSync()"
+                            class="bg-purple-500/20 text-purple-400 px-4 py-2 rounded-xl text-xs font-bold border border-purple-500/30 transition-all">CONNECT
+                            WATCH</button>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="p-4 bg-white/5 rounded-2xl border border-white/5 opacity-50 watch-control">
+                            <p class="text-[10px] opacity-40 uppercase mb-2">Heart Rate</p>
+                            <p class="text-xl font-bold">-- BPM</p>
+                            <button onclick="simulateWatchTrigger('heart')"
+                                class="mt-2 text-[10px] text-purple-400 font-bold">SIMULATE SPIKE</button>
+                        </div>
+                        <div class="p-4 bg-white/5 rounded-2xl border border-white/5 opacity-50 watch-control">
+                            <p class="text-[10px] opacity-40 uppercase mb-2">Wrist Sensors</p>
+                            <p class="text-xl font-bold">NORMAL</p>
+                            <button onclick="simulateWatchTrigger('shake')"
+                                class="mt-2 text-[10px] text-purple-400 font-bold">SIMULATE SHAKE</button>
+                        </div>
+                        <div class="p-4 bg-white/5 rounded-2xl border border-white/5 opacity-50 watch-control">
+                            <p class="text-[10px] opacity-40 uppercase mb-2">Watch SOS</p>
+                            <p class="text-xs font-medium">READY</p>
+                            <button onclick="triggerSOS()" class="mt-2 text-[10px] text-red-500 font-bold">FIRE
+                                SOS</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- AI Tab -->
+        <section id="ai-section" class="hidden module">
+            <div class="glass p-8 rounded-3xl bg-gradient-to-br from-purple-900/10 to-transparent">
+                <div class="flex justify-between items-center mb-10">
+                    <div>
+                        <h3 id="ai-title" class="text-3xl font-outfit font-bold text-purple-400">AI Safety Predictor
+                        </h3>
+                        <p class="text-white/40 text-sm mt-1">Analyzing Location Risk, Movement Patterns, and
+                            Environmental Data.</p>
+                    </div>
+                    <button onclick="simulateAIDetection()"
+                        class="bg-purple-500/20 px-6 py-3 rounded-full text-xs font-bold border border-purple-500/30 hover:bg-purple-500/30 transition-all">REFRESH
+                        ANALYSIS</button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                    <div class="p-6 bg-white/5 rounded-3xl border border-white/5">
+                        <p class="text-[10px] opacity-40 uppercase mb-2">Location Risk</p>
+                        <p id="ai-loc-risk" class="text-2xl font-black text-green-500">LOW</p>
+                        <p class="text-xs text-white/40 mt-1">Verifying "Mumabi Tech Dist"</p>
+                    </div>
+                    <div class="p-6 bg-white/5 rounded-3xl border border-white/5">
+                        <p class="text-[10px] opacity-40 uppercase mb-2">Movement Sync</p>
+                        <p id="ai-movement" class="text-2xl font-black text-white">NORMAL</p>
+                        <p class="text-xs text-white/40 mt-1">Paces: 64 steps/min</p>
+                    </div>
+                    <div class="p-6 bg-white/5 rounded-3xl border border-white/5">
+                        <p class="text-[10px] opacity-40 uppercase mb-2">Time Hazard</p>
+                        <p id="ai-time-risk" class="text-2xl font-black text-white">SAFE</p>
+                        <p class="text-xs text-white/40 mt-1" id="ai-time-label">04:30 PM (Daylight)</p>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <div id="ai-analysis" class="p-6 bg-green-500/10 rounded-2xl border border-green-500/20">
+                        <div class="flex items-center gap-3 mb-2">
+                            <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                            <p class="font-bold text-green-400 text-sm uppercase italic">Final Verdict: Secure</p>
+                        </div>
+                        <p class="text-sm">Comprehensive check complete. Your current environment and movements match
+                            safe historical patterns. Journey Tracking is recommended for night travel.</p>
+                    </div>
+                </div>
+
+                <div class="mt-10">
+                    <div class="flex justify-between items-end mb-2">
+                        <span class="text-[10px] opacity-40 uppercase">Global Safety Confidence</span>
+                        <span id="ai-confidence-label" class="text-xl font-black text-purple-400">98%</span>
+                    </div>
+                    <div class="h-3 w-full bg-white/5 rounded-full overflow-hidden">
+                        <div id="riskLevelBar"
+                            class="h-full bg-purple-500 transition-all duration-1000 shadow-[0_0_15px_rgba(168,85,247,0.5)]"
+                            style="width: 98%"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Community Tab -->
+        <section id="community-section" class="hidden module">
+            <div class="glass p-8 rounded-3xl">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
+                    <div>
+                        <h4 class="text-2xl font-outfit font-bold">Safety Awareness Feed</h4>
+                        <p class="text-white/40 text-sm mt-1">Verified hazard reports from GuardianEye users in your
+                            city.</p>
+                    </div>
+                    <button onclick="addReport()"
+                        class="bg-safety-blue px-6 py-3 rounded-2xl font-bold text-xs shadow-lg shadow-safety-blue/20">FILE
+                        A REPORT</button>
+                </div>
+                <div id="report-list" class="space-y-6">
+                    <!-- Reports -->
+                    <div
+                        class="report-item p-5 bg-red-500/10 rounded-3xl border border-red-500/10 flex items-start gap-4">
+                        <div class="w-12 h-12 bg-red-500/20 rounded-2xl flex items-center justify-center shrink-0">
+                            <i data-lucide="alert-triangle" class="text-red-500 w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <p class="font-bold text-base">Unsafe Area (Dark Street)</p>
+                                <span
+                                    class="bg-red-500/20 text-red-500 text-[8px] font-bold px-2 py-0.5 rounded uppercase">Verified</span>
+                            </div>
+                            <p class="text-sm text-white/60 mb-3">Street lamps broken on Sector 4 Avenue for 300m. Avoid
+                                walking alone here after 8 PM.</p>
+                            <div class="flex items-center gap-4 text-[10px] text-white/30 font-bold">
+                                <span>2 hours ago</span>
+                                <span class="flex items-center gap-1"><i data-lucide="thumbs-up" class="w-2 h-2"></i> 14
+                                    Helpfull</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        class="report-item p-5 bg-orange-500/10 rounded-3xl border border-orange-500/10 flex items-start gap-4">
+                        <div class="w-12 h-12 bg-orange-500/20 rounded-2xl flex items-center justify-center shrink-0">
+                            <i data-lucide="eye" class="text-orange-500 w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <p class="font-bold text-base">Suspicious Activity</p>
+                                <span
+                                    class="bg-orange-500/20 text-orange-500 text-[8px] font-bold px-2 py-0.5 rounded uppercase">Reported</span>
+                            </div>
+                            <p class="text-sm text-white/60 mb-3">Unknown individuals loitering near Tech District
+                                entrance. Security alerted.</p>
+                            <div class="flex items-center gap-4 text-[10px] text-white/30 font-bold">
+                                <span>5 hours ago</span>
+                                <span class="flex items-center gap-1"><i data-lucide="thumbs-up" class="w-2 h-2"></i> 8
+                                    Helpfull</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Hidden Blackout Overlay (Secret Recording) -->
+    <div id="blackout-screen" onclick="stopHiddenMode()"
+        class="fixed inset-0 bg-black z-[3000] hidden flex items-center justify-center cursor-none">
+        <p class="text-[8px] opacity-1 opacity-1 text-white/0 select-none">Tap anywhere to restore screen</p>
+    </div>
+
+    <!-- Overlays -->
+    <div id="fake-call-screen">
+        <div class="text-center animate-bounce-slow">
+            <div
+                class="w-40 h-40 bg-white/5 border border-white/10 rounded-full mx-auto mb-8 flex items-center justify-center text-6xl font-black shadow-2xl">
+                M</div>
+            <h2 class="text-5xl font-outfit font-bold mb-3">Mom</h2>
+            <p class="text-safety-blue uppercase tracking-widest text-sm font-black animate-pulse">Incoming Audio Call
+            </p>
+        </div>
+        <div class="w-full max-w-sm flex justify-between px-8 pb-24">
+            <button onclick="endFakeCall()"
+                class="w-24 h-24 bg-safety-red rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(255,59,48,0.5)] active:scale-90 transition-all">
+                <i data-lucide="phone-off" class="text-white w-10 h-10"></i>
+            </button>
+            <button onclick="endFakeCall()"
+                class="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(76,217,100,0.5)] active:scale-90 transition-all">
+                <i data-lucide="phone" class="text-white w-10 h-10"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- SOS Alert -->
+    <div id="sos-alert"
+        class="fixed inset-0 bg-safety-red/90 backdrop-blur-2xl z-[2000] hidden flex flex-col items-center justify-center text-center p-8 overflow-hidden">
+        <!-- Background decorative text -->
+        <div
+            class="absolute inset-0 flex flex-wrap opacity-10 pointer-events-none select-none overflow-hidden font-black uppercase text-4xl leading-none">
+            SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS
+            SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS
+            SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS
+            SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS SOS
+        </div>
+
+        <div class="relative z-10 space-y-12">
+            <div class="w-40 h-40 bg-white rounded-full flex items-center justify-center mx-auto pulse">
+                <i data-lucide="alert-triangle" class="w-20 h-20 text-safety-red"></i>
+            </div>
+            <div>
+                <h1 class="text-7xl font-black italic mb-4 tracking-tighter">EMERGENCY ACTIVE</h1>
+                <p class="text-2xl font-bold max-w-lg mx-auto leading-tight">Your live location, audio, and video
+                    evidence are currently being broadcast to your Trusted Circle.</p>
+            </div>
+
+            <div class="bg-black/20 p-6 rounded-3xl border border-white/10 backdrop-blur-md">
+                <p class="text-xs uppercase opacity-60 mb-2 font-bold tracking-widest">Active Guardians</p>
+                <div class="flex justify-center gap-4">
+                    <div
+                        class="w-12 h-12 rounded-full bg-orange-500 flex items-center justify-center font-bold shadow-lg">
+                        M</div>
+                    <div
+                        class="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center font-bold shadow-lg">
+                        D</div>
+                    <div
+                        class="w-12 h-12 rounded-full bg-gray-500 flex items-center justify-center font-bold shadow-lg border-2 border-dashed border-white/20">
+                        +</div>
+                </div>
+            </div>
+
+            <button onclick="stopSOS()"
+                class="bg-white text-safety-red px-16 py-6 rounded-3xl font-black text-xl shadow-2xl hover:brightness-110 active:scale-95 transition-all">TERMINATE
+                SOS</button>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+        let map;
+        const currentLocation = [19.0760, 72.8777]; // Mumbai
+        let isWatchSynced = false;
+
+        function showModule(mod) {
+            document.querySelectorAll('.module').forEach(m => m.classList.add('hidden'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+            let IDs = {
+                dashboard: 'dashboard',
+                map: 'map-section',
+                circle: 'circle-section',
+                tools: 'tools-section',
+                ai: 'ai-section',
+                community: 'community-section'
+            };
+
+            let id = IDs[mod] || 'dashboard';
+            document.getElementById(id).classList.remove('hidden');
+            if (document.getElementById(`nav-${mod}`)) document.getElementById(`nav-${mod}`).classList.add('active');
+
+            if (mod === 'map') {
+                setTimeout(() => {
+                    if (!map) {
+                        map = L.map('map', { zoomControl: false }).setView(currentLocation, 13);
+                        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
+
+                        // Current location marker
+                        L.circle(currentLocation, { radius: 500, color: '#007AFF', fillColor: '#007AFF', fillOpacity: 0.4 }).addTo(map);
+
+                        // Add Safe Zones
+                        L.marker([19.0800, 72.8800]).addTo(map).bindPopup("<b>Police Station</b><br>Safe Zone");
+                        L.marker([19.0700, 72.8700]).addTo(map).bindPopup("<b>City Hospital</b><br>Safe Zone");
+
+                        // Add hazards from reports
+                        L.circleMarker([19.0850, 72.8750], { color: '#FF3B30', radius: 15, fillColor: '#FF3B30', fillOpacity: 0.3 }).addTo(map).bindPopup("<b>Verified Hazard</b><br>Dark Street");
+                    }
+                }, 100);
+            }
+            document.getElementById('module-title').innerText = mod.replace('-', ' ').toUpperCase();
+            updateSubtitle(mod);
+        }
+
+        function updateSubtitle(mod) {
+            const subtitles = {
+                dashboard: 'Real-time monitoring active.',
+                map: 'Track your path and locate safe zones.',
+                circle: 'Manage your primary emergency guardians.',
+                tools: 'Counter-hazard tools & device sync.',
+                ai: 'Advanced behavioral safety analysis.',
+                community: 'Local hazard reports from users.'
+            };
+            document.getElementById('module-subtitle').innerText = subtitles[mod] || '';
+        }
+
+        function triggerSOS() {
+            document.getElementById('sos-alert').classList.remove('hidden');
+            startSecretRecording(true);
+            if (isWatchSynced) {
+                console.log("WATCH: Triggering vibration and alert confirmation...");
+            }
+            setTimeout(() => {
+                if (confirm("Emergency! SOS Broadcast active. Call Mom (9461206397) now?")) {
+                    window.location.href = "tel:9461206397";
+                }
+            }, 1000);
+        }
+
+        function stopSOS() { document.getElementById('sos-alert').classList.add('hidden'); }
+
+        function startFakeCall(delay = 0) {
+            if (delay > 0) {
+                alert(`Fake call simulated in ${delay} seconds.`);
+                setTimeout(() => {
+                    document.getElementById('fake-call-screen').classList.add('flex');
+                }, delay * 1000);
+            } else {
+                document.getElementById('fake-call-screen').classList.add('flex');
+            }
+        }
+
+        function endFakeCall() { document.getElementById('fake-call-screen').classList.remove('flex'); }
+
+        // Feature 6: Journey Tracker
+        let journeyInterval;
+        function startJourney() {
+            const destInput = document.querySelector('#journey-controls input');
+            const dest = destInput.value || 'Home (Sector 4)';
+            destInput.disabled = true;
+            document.getElementById('journey-controls').classList.add('hidden');
+            document.getElementById('active-journey-info').classList.remove('hidden');
+            document.getElementById('trip-dest-label').innerText = dest;
+
+            document.getElementById('journey-card-content').innerHTML = `
+                <div class="flex justify-between items-center">
+                    <span class="text-xs font-bold text-safety-blue">TO: ${dest}</span>
+                    <span class="text-[10px] text-green-500 font-black animate-pulse">LIVE TRACKING</span>
+                </div>
+                <div class="h-2 w-full bg-white/5 rounded-full overflow-hidden mt-2">
+                    <div id="journey-dash-bar" class="h-full bg-safety-blue transition-all duration-1000" style="width: 5%"></div>
+                </div>
+            `;
+
+            let progress = 5;
+            let eta = 22;
+            journeyInterval = setInterval(() => {
+                progress += Math.random() * 2;
+                if (progress > 95) progress = 95;
+                if (eta > 1) {
+                    eta -= 0.1;
+                    document.getElementById('journey-eta').innerText = Math.round(eta) + ' min';
+                }
+                const bar = document.getElementById('journey-dash-bar');
+                if (bar) bar.style.width = progress + '%';
+
+                // Simulate Deviation Alert
+                if (Math.random() > 0.95) {
+                    document.getElementById('journey-status-label').innerText = 'DEVIATION!';
+                    document.getElementById('journey-status-label').className = 'text-xs font-bold text-safety-red animate-bounce';
+                    alert("⚠️ Route Deviation Detected! Are you safe?");
+                } else if (Math.random() > 0.5) {
+                    document.getElementById('journey-status-label').innerText = 'ON PATH';
+                    document.getElementById('journey-status-label').className = 'text-xs font-bold text-green-500';
+                }
+            }, 3000);
+        }
+
+        function cancelJourney() {
+            clearInterval(journeyInterval);
+            document.getElementById('journey-controls').classList.remove('hidden');
+            document.getElementById('active-journey-info').classList.add('hidden');
+            document.querySelector('#journey-controls input').disabled = false;
+            document.getElementById('journey-card-content').innerHTML = '<p class="text-xs text-white/40">No active journey. Start one from the Map.</p>';
+        }
+
+        // Feature 7: Secret Recording & Hidden Mode
+        function toggleSecretRecording() {
+            const status = document.getElementById('recordStatus');
+            const isRecording = status.innerText.includes('ACTIVE');
+            if (isRecording) {
+                status.innerHTML = '<div class="w-2 h-2 rounded-full bg-gray-500"></div> STANDBY MODE';
+                status.classList.remove('text-red-500', 'animate-pulse');
+                document.getElementById('recordIcon').style.color = '#FF3B30';
+            } else {
+                startSecretRecording();
+            }
+        }
+
+        function startSecretRecording() {
+            const status = document.getElementById('recordStatus');
+            status.innerHTML = '<div class="w-2 h-2 rounded-full bg-red-500"></div> RECORDING ACTIVE';
+            status.classList.add('text-red-500', 'animate-pulse');
+            document.getElementById('recordIcon').style.color = '#FF3B30';
+            console.log("Secret Recording Started...");
+        }
+
+        function startHiddenMode(e) {
+            e.stopPropagation();
+            startSecretRecording();
+            document.getElementById('blackout-screen').classList.remove('hidden');
+            alert("HIDDEN MODE ACTIVE: Screen will turn black. Tap anywhere to reveal.");
+        }
+
+        function stopHiddenMode() {
+            document.getElementById('blackout-screen').classList.add('hidden');
+        }
+
+        // Feature 10: AI Danger Detection
+        function simulateAIDetection() {
+            const title = document.getElementById('ai-title');
+            const bar = document.getElementById('riskLevelBar');
+            const confidence = document.getElementById('ai-confidence-label');
+            const finalVerdict = document.getElementById('ai-analysis');
+
+            // Sensor labels
+            const locRisk = document.getElementById('ai-loc-risk');
+            const moveSync = document.getElementById('ai-movement');
+            const timeRisk = document.getElementById('ai-time-risk');
+
+            title.innerText = "Analyzing Risk...";
+            bar.style.width = "40%";
+            bar.style.backgroundColor = "#EAB308";
+
+            setTimeout(() => {
+                const randomRisk = Math.floor(Math.random() * 100);
+                bar.style.width = randomRisk + "%";
+                confidence.innerText = randomRisk + "%";
+
+                // Update Sensors
+                if (randomRisk > 70) {
+                    locRisk.innerText = "LOW"; locRisk.className = "text-2xl font-black text-green-500";
+                    moveSync.innerText = "NORMAL";
+                    timeRisk.innerText = "SAFE";
+
+                    finalVerdict.className = "p-6 bg-green-500/10 rounded-2xl border border-green-500/20";
+                    finalVerdict.innerHTML = '<div class="flex items-center gap-3 mb-2"><div class="w-2 h-2 rounded-full bg-green-500"></div><p class="font-bold text-green-400 text-sm uppercase italic">Final Verdict: Secure</p></div><p class="text-sm">Your movement and location patterns are consistent with your safe history.</p>';
+                    bar.style.backgroundColor = "#22C55E";
+                } else if (randomRisk > 40) {
+                    locRisk.innerText = "MEDIUM"; locRisk.className = "text-2xl font-black text-yellow-500";
+                    moveSync.innerText = "ERRATIC";
+                    timeRisk.innerText = "LATE";
+
+                    finalVerdict.className = "p-6 bg-yellow-500/10 rounded-2xl border border-yellow-500/20";
+                    finalVerdict.innerHTML = '<div class="flex items-center gap-3 mb-2"><div class="w-2 h-2 rounded-full bg-yellow-500"></div><p class="font-bold text-yellow-400 text-sm uppercase italic">Final Verdict: Caution</p></div><p class="text-sm">Slightly unusual movement detected in a moderate-risk zone. Stay on main roads.</p>';
+                    bar.style.backgroundColor = "#EAB308";
+                } else {
+                    locRisk.innerText = "HIGH"; locRisk.className = "text-2xl font-black text-red-500";
+                    moveSync.innerText = "RAPID";
+                    timeRisk.innerText = "CRITICAL";
+
+                    finalVerdict.className = "p-6 bg-red-500/10 rounded-2xl border border-red-500/20";
+                    finalVerdict.innerHTML = '<div class="flex items-center gap-3 mb-2"><div class="w-2 h-2 rounded-full bg-red-500"></div><p class="font-bold text-red-400 text-sm uppercase italic">Final Verdict: Danger</p></div><p class="text-sm">AI predicts potential danger based on sensor anomalies and historical risk data. SOS recommended!</p>';
+                    bar.style.backgroundColor = "#EF4444";
+                    if (confirm("🚨 High Risk Predicted! Trigger SOS?")) triggerSOS();
+                }
+                title.innerText = "AI Safety Predictor";
+            }, 2000);
+        }
+
+        // Feature 11: Smartwatch Integration
+        function toggleWatchSync() {
+            const btn = document.getElementById('watch-sync-btn');
+            const status = document.getElementById('watch-sync-status');
+            const controls = document.querySelectorAll('.watch-control');
+
+            if (!isWatchSynced) {
+                btn.innerText = "SYNCING...";
+                setTimeout(() => {
+                    isWatchSynced = true;
+                    btn.innerText = "WATCH CONNECTED";
+                    btn.classList.add('bg-green-500/20', 'text-green-500', 'border-green-500/30');
+                    btn.classList.remove('bg-purple-500/20', 'text-purple-400', 'border-purple-500/30');
+                    status.classList.remove('hidden');
+                    controls.forEach(c => c.classList.remove('opacity-50'));
+                    alert("⌚ Watch Successfully Synced! Shake detection and heart rate monitoring are now active.");
+                }, 1500);
+            } else {
+                isWatchSynced = false;
+                btn.innerText = "CONNECT WATCH";
+                btn.classList.remove('bg-green-500/20', 'text-green-500', 'border-green-500/30');
+                btn.classList.add('bg-purple-500/20', 'text-purple-400', 'border-purple-500/30');
+                status.classList.add('hidden');
+                controls.forEach(c => c.classList.add('opacity-50'));
+            }
+        }
+
+        function simulateWatchTrigger(type) {
+            if (!isWatchSynced) return alert("Please connect watch first!");
+            if (type === 'heart') {
+                alert("💓 Watch detected a heart rate spike (140 BPM)! Proactive alert triggered.");
+                setTimeout(() => { if (confirm("High heart rate detected. Are you safe? Trigger SOS?")) triggerSOS(); }, 500);
+            } else {
+                alert("⌚ Watch detected a rapid shake gesture!");
+                triggerSOS();
+            }
+        }
+
+        function addReport() {
+            const type = prompt("Hazard Type (e.g. Harassment, Dark Street, Suspicious):");
+            const desc = prompt("What happened?");
+            if (type && desc) {
+                const list = document.getElementById('report-list');
+                const report = document.createElement('div');
+                report.className = "report-item p-5 bg-white/5 rounded-3xl border border-white/10 flex items-start gap-4";
+                report.innerHTML = `
+                    <div class="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center shrink-0">
+                         <i data-lucide="info" class="text-white w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <p class="font-bold text-base">${type}</p>
+                            <span class="bg-white/10 text-white text-[8px] font-bold px-2 py-0.5 rounded uppercase">Submitted</span>
+                        </div>
+                        <p class="text-sm text-white/60 mb-3">${desc}</p>
+                        <div class="flex items-center gap-4 text-[10px] text-white/30 font-bold">
+                             <span>Just now</span>
+                        </div>
+                    </div>
+                `;
+                list.prepend(report);
+                lucide.createIcons();
+                alert("Report submitted to the community database. Marker added to map.");
+            }
+        }
+
+        function centerMap() {
+            if (map) map.panTo(currentLocation);
+        }
+
+        function addContact() {
+            const name = prompt("Enter contact name:");
+            const phone = prompt("Enter phone number:");
+            if (name && phone) {
+                const list = document.getElementById('circle-list');
+                const card = document.createElement('div');
+                card.className = "glass p-6 rounded-3xl flex items-center gap-6";
+                card.innerHTML = `
+                    <div class="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center text-2xl font-black">${name[0]}</div>
+                    <div class="flex-1">
+                         <p class="font-bold">${name}</p>
+                         <p class="text-xs text-white/40">${phone}</p>
+                         <div class="flex items-center gap-2 mt-2">
+                            <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                            <span class="text-[10px] text-green-500 font-bold uppercase">Online & Ready</span>
+                         </div>
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <button class="p-2 bg-white/5 rounded-xl text-safety-blue"><i data-lucide="phone" class="w-4 h-4"></i></button>
+                    </div>
+                 `;
+                list.appendChild(card);
+                lucide.createIcons();
+            }
+        }
+
+        // Initialize
+        window.onload = () => {
+            lucide.createIcons();
+            // Randomly update time in AI Predictor based on current real time
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const riskLabel = now.getHours() > 19 || now.getHours() < 6 ? 'CRITICAL (Night)' : 'SAFE (Daylight)';
+            document.getElementById('ai-time-label').innerText = `${timeStr} (${riskLabel})`;
+            document.getElementById('ai-time-risk').innerText = now.getHours() > 19 || now.getHours() < 6 ? 'LATE' : 'SAFE';
+
+            simulateAIDetection();
+        };
+
+        // Rapid Shake SOS Detection
+        let lastShake = 0;
+        window.addEventListener('devicemotion', (e) => {
+            const acc = e.accelerationIncludingGravity;
+            const now = Date.now();
+            if (acc && (Math.abs(acc.x) + Math.abs(acc.y) + Math.abs(acc.z) > 40)) {
+                if (now - lastShake > 2000) {
+                    lastShake = now;
+                    console.log("SHAKE DETECTED: Triggering SOS...");
+                    triggerSOS();
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>
